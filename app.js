@@ -1,77 +1,49 @@
+// app.js
 const express = require("express");
-const fs = require("fs");
 const cors = require("cors");
-const path = require("path");
-const { Parser } = require("json2csv");
+const bodyParser = require("body-parser");
 
 const app = express();
-const PORT = 5000;
 
-app.use(cors());
-app.use(express.json());
+// ✅ Enable CORS so frontend can call this API
+app.use(cors({
+  origin: "*", // You can replace "*" with your GitHub frontend URL later for more security
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 
-// ✅ Temporary in-memory data (replace with DB later)
-let purchases = [
-  {
-    name: "John Doe",
-    phone: "+254712345678",
-    bundle: "Bundle B",
-    price: 2,
-    transactionId: "TXN123456",
-    timestamp: new Date().toLocaleString(),
-  },
+app.use(bodyParser.json());
+
+// ✅ Example bundles data (you can connect to database later)
+const bundles = [
+  { id: 1, name: "Daily 200MB", price: "Ksh 20", data: "200MB" },
+  { id: 2, name: "Weekly 1GB", price: "Ksh 100", data: "1GB" },
+  { id: 3, name: "Monthly 5GB", price: "Ksh 400", data: "5GB" },
 ];
 
-// ✅ Serve frontend files (optional for hosting all together)
-app.use(express.static(path.join(__dirname, "../frontend")));
-
-// ✅ Get all purchases
-app.get("/api/purchases", (req, res) => {
-  res.json(purchases);
+// ✅ Route: Get all bundles
+app.get("/api/bundles", (req, res) => {
+  res.json(bundles);
 });
 
-// ✅ Add new purchase (when customer buys)
-app.post("/api/purchase", (req, res) => {
-  const { name, phone, bundle, price } = req.body;
-  const transactionId = "TXN" + Date.now();
-  const timestamp = new Date().toLocaleString();
+// ✅ Route: Handle bundle purchase
+app.post("/api/buy", (req, res) => {
+  const { bundleName, price } = req.body;
 
-  const purchase = { name, phone, bundle, price, transactionId, timestamp };
-  purchases.push(purchase);
-  console.log("✅ New purchase:", purchase);
-
-  res.json({ success: true, message: "Purchase saved", transactionId, timestamp });
-});
-
-// ✅ Export purchases as CSV
-app.get("/api/export", (req, res) => {
-  try {
-    if (purchases.length === 0) {
-      return res.status(400).json({ message: "No purchases to export" });
-    }
-
-    const fields = ["name", "phone", "bundle", "price", "transactionId", "timestamp"];
-    const parser = new Parser({ fields });
-    const csv = parser.parse(purchases);
-
-    const filePath = path.join(__dirname, "purchases.csv");
-    fs.writeFileSync(filePath, csv);
-
-    res.download(filePath, "purchases.csv", (err) => {
-      if (err) console.error("❌ Download error:", err);
-      fs.unlinkSync(filePath); // clean up
-    });
-  } catch (error) {
-    console.error("❌ CSV Export failed:", error);
-    res.status(500).json({ message: "Error exporting CSV" });
+  if (!bundleName || !price) {
+    return res.status(400).json({ message: "Missing bundle details." });
   }
+
+  console.log(`✅ Purchase received: ${bundleName} at ${price}`);
+
+  res.json({
+    success: true,
+    message: `You successfully bought ${bundleName} for ${price}.`
+  });
 });
 
-// ✅ Default route
-app.get("/", (req, res) => {
-  res.send("Rotcod Data Backend is running 🚀");
-});
-
+// ✅ Auto-detect Render port or use 5000 locally
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://127.0.0.1:${PORT}`);
 });
