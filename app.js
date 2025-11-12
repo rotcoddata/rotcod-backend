@@ -1,20 +1,18 @@
-// app.js
+// app.js — Rotcod Backend
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// ✅ Default route (homepage)
+// ✅ Default route
 app.get("/", (req, res) => {
-  res.send("✅ Rotcod Backend is running successfully on Render!");
+  res.send("✅ Rotcod Backend is running successfully!");
 });
 
-// ✅ Bundles endpoint
+// ✅ Data bundles endpoint
 app.get("/api/bundles", (req, res) => {
   const bundles = [
     { id: 1, name: "Daily 500MB", price: 50, duration: "1 Day" },
@@ -26,8 +24,28 @@ app.get("/api/bundles", (req, res) => {
   res.json(bundles);
 });
 
-// ✅ Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Rotcod Backend running on port ${PORT}`);
+// ✅ Handle customer purchase (simulated)
+app.post("/api/buy", (req, res) => {
+  const { bundleName, price, fee, profit } = req.body;
+  console.log("💳 New Purchase:", { bundleName, price, fee, profit });
+  res.json({ success: true, message: "Purchase recorded successfully" });
 });
+
+// ✅ Secure Admin login route
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  // Your real admin credentials
+  const adminUser = "admin";
+  const adminPass = "1234";
+
+  if (username === adminUser && password === adminPass) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, message: "Invalid credentials" });
+  }
+});
+
+// ✅ Server listen
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Rotcod backend running on port ${PORT}`));
